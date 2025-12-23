@@ -1,0 +1,38 @@
+- name: Install and configure nginx
+  hosts: web
+  become: true
+
+  vars:
+    nginx_port: 8080
+
+  tasks:
+    - name: Install nginx
+      apt:
+        name: nginx
+        state: present
+        update_cache: true
+
+    - name: Deploy nginx config
+      template:
+        src: templates/nginx.conf.j2
+        dest: /etc/nginx/sites-available/default
+      notify: restart nginx
+
+    - name: Enable nginx site
+      file:
+        src: /etc/nginx/sites-available/default
+        dest: /etc/nginx/sites-enabled/default
+        state: link
+      notify: restart nginx
+
+    - name: Ensure nginx is running
+      service:
+        name: nginx
+        state: started
+        enabled: true
+
+  handlers:
+    - name: restart nginx
+      service:
+        name: nginx
+        state: restarted
